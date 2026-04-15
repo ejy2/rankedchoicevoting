@@ -7,20 +7,20 @@
 
 <style>
 :root {
-  /* Deep Earthy Palette */
-  --bg: #1c1b17;        /* Night Soil */
-  --surface: #26241f;   /* Dark Clay */
-  --surface2: #333029;  /* Weathered Stone */
-  --border: #423d33;    /* Tree Bark */
+  /* Earthy "Forest Floor" Palette */
+  --bg: #1c1b18;        /* Deep Soil */
+  --surface: #26241f;   /* Dark Bark */
+  --surface2: #302d26;  /* River Rock */
+  --border: #3d3a31;    /* Silt */
   
-  --accent: #7d8c61;    /* Mossy Green */
-  --accent2: #b58d63;   /* Ochre / Sandstone */
-  --danger: #9e4a3a;    /* Terracotta */
+  --accent: #7a8c61;    /* Moss Green */
+  --accent2: #b89166;   /* Sandstone */
+  --danger: #9c4a3d;    /* Red Clay */
   
-  --text: #e3ddd3;      /* Unbleached Linen */
-  --muted: #8c8578;     /* River Silt */
+  --text: #e0dbd1;      /* Parchment */
+  --muted: #8c8575;     /* Dry Grass */
   
-  --winner: #a3c276;    /* Lichen Green */
+  --winner: #a3c276;    /* Lichen */
 }
 
 body {
@@ -44,7 +44,7 @@ header {
   text-align: center;
   margin-bottom: 3rem;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 20px;
+  padding-bottom: 25px;
 }
 
 h1 {
@@ -59,9 +59,10 @@ h1 {
   color: var(--muted);
   font-style: italic;
   font-size: 0.9rem;
+  margin-top: 8px;
 }
 
-.file-zone {
+.upload-area {
   background: var(--surface);
   border: 2px dashed var(--border);
   padding: 3rem 1rem;
@@ -71,7 +72,7 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.file-zone:hover {
+.upload-area:hover {
   border-color: var(--accent);
   background: #2a2822;
 }
@@ -83,86 +84,109 @@ input[type="file"] {
   cursor: pointer;
 }
 
-.election-block {
+.election-card {
   margin-bottom: 5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
 }
 
-.election-title {
+.election-name {
   color: var(--accent);
-  font-size: 2rem;
+  font-size: 2.2rem;
   margin-bottom: 1.5rem;
-  padding-left: 15px;
-  border-left: 6px solid var(--accent2);
-}
-
-.round-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-}
-
-.round-label {
-  color: var(--accent2);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 1rem;
-  display: block;
-}
-
-.candidate-item {
-  margin: 15px 0;
-}
-
-.progress-group {
+  font-weight: normal;
   display: flex;
   align-items: center;
   gap: 15px;
 }
 
-.progress-track {
+.election-name::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 40px;
+  background: var(--accent2);
+}
+
+.round-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.round-header {
+  color: var(--accent2);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 1.2rem;
+  display: block;
+}
+
+.candidate-entry {
+  margin: 15px 0;
+}
+
+.progress-strip {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.bar-bg {
   flex-grow: 1;
-  height: 10px;
+  height: 12px;
   background: var(--surface2);
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.progress-fill {
+.bar-fill {
   height: 100%;
   background: var(--accent);
   width: 0%;
   transition: width 1.2s cubic-bezier(0.1, 0.5, 0.2, 1);
 }
 
-.stats-text {
-  font-family: 'Courier New', Courier, monospace;
+.vote-tally {
+  font-family: 'Courier New', monospace;
   font-size: 0.85rem;
-  min-width: 90px;
+  min-width: 110px;
   color: var(--muted);
+  text-align: right;
 }
 
-.elim-notice {
+.elim-text {
   margin-top: 15px;
   padding-top: 10px;
   border-top: 1px solid var(--border);
   color: var(--danger);
+  font-style: italic;
   font-size: 0.9rem;
 }
 
-.winner-notice {
+.winner-banner {
   margin-top: 20px;
-  padding: 20px;
-  background: rgba(163, 194, 118, 0.1);
-  border: 1px solid var(--winner);
+  padding: 25px;
+  background: rgba(163, 194, 118, 0.08);
+  border: 2px solid var(--winner);
   color: var(--winner);
   text-align: center;
-  border-radius: 6px;
-  font-size: 1.3rem;
+  border-radius: 8px;
+  font-size: 1.5rem;
   font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.error-msg {
+  text-align: center;
+  color: var(--danger);
+  background: rgba(156, 74, 58, 0.1);
+  padding: 20px;
+  border-radius: 8px;
 }
 </style>
 </head>
@@ -172,11 +196,11 @@ input[type="file"] {
 <div class="container">
   <header>
     <h1>WOC Ranked Choice Voting</h1>
-    <div class="sub-header">Stability through mathematical consensus.</div>
+    <div class="sub-header">Stability through consensus. Only [Rank n] columns are tabulated.</div>
   </header>
   
-  <div class="file-zone">
-    <label for="fileInput">Choose a CSV file to begin the count</label>
+  <div class="upload-area">
+    <label for="fileInput">Choose your CSV file to begin the count</label>
     <input type="file" id="fileInput" accept=".csv">
   </div>
 
@@ -184,20 +208,17 @@ input[type="file"] {
 </div>
 
 <script>
-let parsedData;
+let csvData;
 
 document.getElementById('fileInput').addEventListener('change', e => {
   const file = e.target.files[0];
+  if (!file) return;
+
   const reader = new FileReader();
-
   reader.onload = () => {
-    const text = reader.result;
-    parsedData = parseCSV(text);
-    if (parsedData) {
-      processElections();
-    }
+    csvData = parseCSV(reader.result);
+    if (csvData) processRankedElections();
   };
-
   reader.readAsText(file);
 });
 
@@ -210,46 +231,57 @@ function parseCSV(text) {
   return { headers, rows };
 }
 
-function processElections() {
+function processRankedElections() {
   const container = document.getElementById('output');
   container.innerHTML = ""; 
 
-  // Group columns by checking for the [Rank] trigger
-  const electionGroups = {};
-  parsedData.headers.forEach((header, idx) => {
-    // Captures everything before "[Rank" as the election name
-    const match = header.match(/(.*?)\s*\[Rank/i);
-    const electionName = match ? match[1].trim() : header.trim();
-    
-    if (!electionGroups[electionName]) electionGroups[electionName] = [];
-    electionGroups[electionName].push(idx);
+  // STRICT FILTER: Match only columns ending in [Rank ...]
+  // This captures the text before the rank as the "Election Name"
+  const rankRegex = /^(.*?)\s*\[Rank\s*[^\]]+\]$/i;
+  
+  const groups = {};
+  let validColumnCount = 0;
+
+  csvData.headers.forEach((header, idx) => {
+    const match = header.match(rankRegex);
+    if (match) {
+      const electionName = match[1].trim() || "Election";
+      if (!groups[electionName]) groups[electionName] = [];
+      groups[electionName].push(idx);
+      validColumnCount++;
+    }
   });
 
-  // Run the logic for each unique election found
-  Object.keys(electionGroups).forEach(name => {
-    const colIndices = electionGroups[name];
+  if (validColumnCount === 0) {
+    container.innerHTML = `<div class="error-msg">No valid data found. Ensure your columns end with <strong>[Rank 1]</strong>, <strong>[Rank 2]</strong>, etc.</div>`;
+    return;
+  }
+
+  // Process each distinct group (category)
+  Object.keys(groups).forEach(name => {
+    const colIndices = groups[name];
     
-    // Create ballots by mapping rows to the grouped columns
-    const ballots = parsedData.rows.map(row => {
+    // Build ballots for this specific category
+    const ballots = csvData.rows.map(row => {
         return colIndices.map(idx => row[idx]).filter(val => val && val.length > 0);
     }).filter(b => b.length > 0);
 
     if (ballots.length === 0) return;
 
     // UI Construction
-    const electionBlock = document.createElement('div');
-    electionBlock.className = 'election-block';
+    const card = document.createElement('div');
+    card.className = 'election-card';
     const title = document.createElement('h2');
-    title.className = 'election-title';
+    title.className = 'election-name';
     title.textContent = name;
-    electionBlock.appendChild(title);
-    container.appendChild(electionBlock);
+    card.appendChild(title);
+    container.appendChild(card);
 
-    runRCVLogic(ballots, electionBlock);
+    runRCV(ballots, card);
   });
 }
 
-function runRCVLogic(ballots, parentElement) {
+function runRCV(ballots, parent) {
   const allCandidates = [...new Set(ballots.flat())];
   let remaining = [...allCandidates];
   const rounds = [];
@@ -258,10 +290,9 @@ function runRCVLogic(ballots, parentElement) {
     const counts = {};
     remaining.forEach(c => counts[c] = 0);
 
-    // Tally current top-valid-choice
     ballots.forEach(ballot => {
-      const top = ballot.find(c => remaining.includes(c));
-      if (top) counts[top]++;
+      const topValid = ballot.find(c => remaining.includes(c));
+      if (topValid) counts[topValid]++;
     });
 
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -270,78 +301,78 @@ function runRCVLogic(ballots, parentElement) {
     const data = { counts: { ...counts }, total: total };
     rounds.push(data);
 
-    // Success condition: Majority or only 1 left
+    // Majority check
     if (total === 0 || (counts[sorted[0]] / total) > 0.5 || remaining.length <= 1) {
       data.winner = sorted[0];
-      renderRounds(rounds, parentElement);
+      render(rounds, parent);
       return;
     }
 
-    // Elimination logic (find lowest, tie-break alphabetically)
-    const minVotes = counts[sorted[sorted.length - 1]];
-    const candidatesAtMin = sorted.filter(c => counts[c] === minVotes);
-    const eliminated = candidatesAtMin.sort()[0];
+    // Eliminate lowest
+    const minVal = counts[sorted[sorted.length - 1]];
+    const bottomCandidates = sorted.filter(c => counts[c] === minVal);
+    const eliminated = bottomCandidates.sort()[0]; // Alpha tie-break
     
     data.eliminated = eliminated;
     remaining = remaining.filter(c => c !== eliminated);
   }
 }
 
-function renderRounds(rounds, parentElement) {
+function render(rounds, parent) {
   rounds.forEach((round, i) => {
-    const box = document.createElement('div');
-    box.className = 'round-box';
+    const container = document.createElement('div');
+    container.className = 'round-container';
 
-    const label = document.createElement('span');
-    label.className = 'round-label';
-    label.textContent = `Tabulation Round ${i + 1}`;
-    box.appendChild(label);
+    const header = document.createElement('span');
+    header.className = 'round-header';
+    header.textContent = `Tabulation Phase ${i + 1}`;
+    container.appendChild(header);
 
-    const entries = Object.entries(round.counts).sort((a,b) => b[1] - a[1]);
+    const sortedEntries = Object.entries(round.counts).sort((a,b) => b[1] - a[1]);
 
-    entries.forEach(([name, count]) => {
+    sortedEntries.forEach(([name, count]) => {
       const pct = round.total > 0 ? (count / round.total) * 100 : 0;
       
-      const item = document.createElement('div');
-      item.className = 'candidate-item';
-      item.innerHTML = `<div>${name}</div>`;
+      const entry = document.createElement('div');
+      entry.className = 'candidate-entry';
+      entry.innerHTML = `<div style="margin-bottom:5px">${name}</div>`;
 
-      const group = document.createElement('div');
-      group.className = 'progress-group';
+      const strip = document.createElement('div');
+      strip.className = 'progress-strip';
 
-      const track = document.createElement('div');
-      track.className = 'progress-track';
+      const bar = document.createElement('div');
+      bar.className = 'bar-bg';
       const fill = document.createElement('div');
-      fill.className = 'progress-fill';
-      setTimeout(() => fill.style.width = pct + '%', 150);
+      fill.className = 'bar-fill';
+      setTimeout(() => fill.style.width = pct + '%', 100);
       
-      track.appendChild(fill);
-      group.appendChild(track);
+      bar.appendChild(fill);
+      strip.appendChild(bar);
 
       const stats = document.createElement('span');
-      stats.className = 'stats-text';
+      stats.className = 'vote-tally';
       stats.textContent = `${count} (${pct.toFixed(1)}%)`;
-      group.appendChild(stats);
+      strip.appendChild(stats);
 
-      item.appendChild(group);
-      box.appendChild(item);
+      entry.appendChild(strip);
+      container.appendChild(entry);
     });
 
     if (round.eliminated && !round.winner) {
       const elim = document.createElement('div');
-      elim.className = 'elim-notice';
-      elim.textContent = `Candidate eliminated: ${round.eliminated}`;
-      box.appendChild(elim);
+      elim.className = 'elim-text';
+      elim.textContent = `Eliminated: ${round.eliminated} (lowest votes)`;
+      container.appendChild(elim);
     }
 
     if (round.winner) {
       const win = document.createElement('div');
-      win.className = 'winner-notice';
+      win.className = 'winner-banner';
       win.textContent = `✓ ELECTED: ${round.winner}`;
-      box.appendChild(win);
+      container.appendChild(win);
     }
 
-    parentElement.appendChild(box);
+    parent.appendChild(container);
   });
 }
 </script>
