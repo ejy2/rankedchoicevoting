@@ -3,80 +3,138 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ranked Choice Voting</title>
+<title>Earthbound Ranked Choice Voting</title>
 
 <style>
 :root {
-  --bg: #1b1a17;
-  --surface: #24221e;
-  --surface2: #2e2b26;
-  --border: #3a362f;
-
-  --accent: #6b8e23;
-  --accent2: #a67c52;
-  --danger: #b04a3a;
-
-  --text: #e6e1d9;
-  --muted: #8a8378;
-
-  --winner: #7aa33a;
+  /* Earthy Palette */
+  --bg: #2d2926;        /* Deep Soil */
+  --surface: #3c3830;   /* Dry Clay */
+  --surface2: #4a453c;  /* Warm Stone */
+  --border: #5c5346;    /* Bark */
+  
+  --accent: #8da47e;    /* Moss Green */
+  --accent2: #c4a484;   /* Sandy Tan */
+  --danger: #a65d50;    /* Terracotta Red */
+  
+  --text: #e8e1d5;      /* Unbleached Cotton */
+  --muted: #a39b8f;     /* Dusty Pebble */
+  
+  --winner: #b9d187;    /* Spring Bud */
 }
 
 body {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Georgia', 'Palatino', serif;
   background: var(--bg);
   color: var(--text);
+  line-height: 1.6;
   margin: 0;
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  max-width: 800px;
+  width: 100%;
 }
 
 h1 {
-  color: var(--accent);
-  margin-bottom: 1rem;
+  color: var(--accent2);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+  text-align: center;
 }
 
-input {
-  margin-bottom: 1.5rem;
+h2.election-title {
+  color: var(--accent);
+  margin-top: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-left: 5px solid var(--accent);
+  padding-left: 15px;
+}
+
+input[type="file"] {
+  background: var(--surface);
+  padding: 1rem;
+  border: 1px dashed var(--muted);
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
 .round {
   margin-bottom: 1.5rem;
-  padding: 1rem;
+  padding: 1.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.candidate-row {
+  margin: 10px 0;
+}
+
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .bar {
-  height: 20px;
+  flex-grow: 1;
+  height: 14px;
   background: var(--surface2);
-  margin: 5px 0;
-  position: relative;
+  border-radius: 7px;
+  overflow: hidden;
 }
 
 .fill {
   height: 100%;
   background: var(--accent);
-  transition: width 0.5s;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+.vote-count {
+  font-size: 0.9rem;
+  min-width: 80px;
+  color: var(--muted);
 }
 
 .eliminated {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background: rgba(166, 93, 80, 0.1);
   color: var(--danger);
+  border-radius: 4px;
+  font-style: italic;
 }
 
-.winner {
+.winner-banner {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(185, 209, 135, 0.15);
+  border: 1px solid var(--winner);
   color: var(--winner);
   font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Ranked Choice Voting</h1>
-<input type="file" id="fileInput" accept=".csv">
-
-<div id="output"></div>
+<div class="container">
+  <h1>Ranked Choice Results</h1>
+  <input type="file" id="fileInput" accept=".csv">
+  <div id="output"></div>
+</div>
 
 <script>
 let parsedData;
@@ -87,7 +145,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
   reader.onload = () => {
     parsedData = parseCSV(reader.result);
-    runElection();
+    processAllElections();
   };
 
   reader.readAsText(file);
@@ -95,22 +153,55 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
-  const headers = lines[0].split(",");
-  const rows = lines.slice(1).map(l => l.split(","));
+  if (lines.length === 0) return null;
+  
+  const headers = lines[0].split(",").map(h => h.trim());
+  const rows = lines.slice(1).map(l => {
+    // Basic CSV split, handle quotes if necessary but keeping it simple
+    return l.split(",").map(cell => cell.trim());
+  });
   return { headers, rows };
 }
 
-function runElection() {
-  const candidates = [...new Set(parsedData.rows.flat())].filter(Boolean);
+function processAllElections() {
+  const container = document.getElementById('output');
+  container.innerHTML = ""; // Clear old results
 
-  const ballots = parsedData.rows.map(row =>
-    row.filter(Boolean)
-  );
+  // Iterate through each header column as a potential election
+  parsedData.headers.forEach((header, colIndex) => {
+    // Extract ballots for this specific election (column)
+    // We assume the rows contain the candidates for that election index
+    const columnVotes = parsedData.rows.map(row => row[colIndex]).filter(Boolean);
+    
+    if (columnVotes.length === 0) return;
 
+    // Create a section for this election
+    const section = document.createElement('section');
+    const title = document.createElement('h2');
+    title.className = 'election-title';
+    title.textContent = header || `Election ${colIndex + 1}`;
+    section.appendChild(title);
+    container.appendChild(section);
+
+    runElection(columnVotes, section);
+  });
+}
+
+function runElection(votes, parentElement) {
+  // Identify candidates in this specific column
+  const candidates = [...new Set(votes)].filter(Boolean);
+  
+  // RCV usually involves ranked ballots (multiple columns). 
+  // If your CSV format is "Column 1 = Election A, Column 2 = Election B",
+  // this script treats each cell in that column as a "top choice".
+  // Note: To do true RCV with rankings, the logic below treats the column 
+  // as the dataset. If your CSV is structured differently, let me know!
+  
+  let ballots = votes.map(v => [v]); // Wrapped in arrays to mimic ranking logic
   let remaining = [...candidates];
   const rounds = [];
 
-  while (true) {
+  while (remaining.length > 0) {
     const counts = {};
     remaining.forEach(c => counts[c] = 0);
 
@@ -119,96 +210,90 @@ function runElection() {
       if (pick) counts[pick]++;
     });
 
-    const total = Object.values(counts).reduce((a,b)=>a+b,0);
-    rounds.push({ counts: {...counts}, total });
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const sorted = remaining.slice().sort((a, b) => counts[b] - counts[a]);
+    
+    rounds.push({ counts: { ...counts }, total });
 
-    const sorted = remaining.slice().sort((a,b)=>counts[b]-counts[a]);
-
-    if (counts[sorted[0]] / total > 0.5 || remaining.length <= 2) {
-      rounds[rounds.length-1].winner = sorted[0];
-      render(rounds);
+    if (total === 0 || counts[sorted[0]] / total > 0.5 || remaining.length <= 1) {
+      rounds[rounds.length - 1].winner = sorted[0];
+      render(rounds, parentElement);
       return;
     }
 
-    // Deterministic tie-breaking
-    const minVotes = counts[sorted[sorted.length-1]];
+    const minVotes = counts[sorted[sorted.length - 1]];
     const toElim = sorted.filter(c => counts[c] === minVotes);
-
-    let eliminated;
-
-    if (toElim.length === 1) {
-      eliminated = toElim[0];
-    } else {
-      for (let i = rounds.length - 2; i >= 0; i--) {
-        const prev = rounds[i].counts;
-
-        const sortedTie = toElim.slice().sort((a,b)=>{
-          return (prev[a]||0) - (prev[b]||0);
-        });
-
-        if ((prev[sortedTie[0]]||0) !== (prev[sortedTie[1]]||0)) {
-          eliminated = sortedTie[0];
-          break;
-        }
-      }
-
-      if (!eliminated) {
-        eliminated = toElim.sort()[0];
-      }
-    }
-
-    rounds[rounds.length-1].eliminated = eliminated;
+    
+    // Simple tie-break: alphabetical or first in list
+    const eliminated = toElim.sort()[0];
+    
+    rounds[rounds.length - 1].eliminated = eliminated;
     remaining = remaining.filter(c => c !== eliminated);
   }
 }
 
-function render(rounds) {
-  const container = document.getElementById('output');
-  container.innerHTML = "";
-
+function render(rounds, parentElement) {
   rounds.forEach((round, i) => {
     const div = document.createElement('div');
     div.className = 'round';
 
-    const title = document.createElement('h3');
-    title.textContent = "Round " + (i + 1);
-    div.appendChild(title);
+    const h3 = document.createElement('h3');
+    h3.style.marginTop = "0";
+    h3.textContent = `Round ${i + 1}`;
+    div.appendChild(h3);
 
     const total = round.total || 1;
+    
+    // Sort display by vote count
+    const sortedEntry = Object.entries(round.counts).sort((a,b) => b[1] - a[1]);
 
-    Object.entries(round.counts).forEach(([c,v]) => {
+    sortedEntry.forEach(([c, v]) => {
       const pct = (v / total) * 100;
+      
+      const row = document.createElement('div');
+      row.className = 'candidate-row';
+      
+      const name = document.createElement('div');
+      name.textContent = c;
+      row.appendChild(name);
 
-      const label = document.createElement('div');
-      label.textContent = `${c} (${v})`;
-      div.appendChild(label);
+      const barContainer = document.createElement('div');
+      barContainer.className = 'bar-container';
 
       const bar = document.createElement('div');
       bar.className = 'bar';
-
       const fill = document.createElement('div');
       fill.className = 'fill';
-      setTimeout(() => fill.style.width = pct + '%', 50);
-
+      // Trigger animation
+      setTimeout(() => fill.style.width = pct + '%', 100);
+      
       bar.appendChild(fill);
-      div.appendChild(bar);
+      barContainer.appendChild(bar);
+
+      const countLabel = document.createElement('span');
+      countLabel.className = 'vote-count';
+      countLabel.textContent = `${v} (${pct.toFixed(1)}%)`;
+      barContainer.appendChild(countLabel);
+
+      row.appendChild(barContainer);
+      div.appendChild(row);
     });
 
-    if (round.eliminated) {
+    if (round.eliminated && !round.winner) {
       const elim = document.createElement('div');
       elim.className = 'eliminated';
-      elim.textContent = "Eliminated: " + round.eliminated;
+      elim.textContent = `▲ ${round.eliminated} was eliminated`;
       div.appendChild(elim);
     }
 
     if (round.winner) {
       const win = document.createElement('div');
-      win.className = 'winner';
-      win.textContent = "Winner: " + round.winner;
+      win.className = 'winner-banner';
+      win.textContent = `WINNER: ${round.winner}`;
       div.appendChild(win);
     }
 
-    container.appendChild(div);
+    parentElement.appendChild(div);
   });
 }
 </script>
