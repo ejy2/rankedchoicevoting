@@ -4,903 +4,214 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ranked Choice Voting</title>
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+:root {
+  --bg: #1b1a17;
+  --surface: #24221e;
+  --surface2: #2e2b26;
+  --border: #3a362f;
 
-  :root {
-    --bg: #0d0d0d;
-    --surface: #161616;
-    --surface2: #1f1f1f;
-    --border: #2a2a2a;
-    --accent: #c8f135;
-    --accent2: #f1c135;
-    --danger: #f13535;
-    --text: #e8e8e8;
-    --muted: #666;
-    --winner: #c8f135;
-  }
+  --accent: #6b8e23;
+  --accent2: #a67c52;
+  --danger: #b04a3a;
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  --text: #e6e1d9;
+  --muted: #8a8378;
 
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── HEADER ── */
-  header {
-    padding: 2rem 3rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-  }
-  header h1 {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--accent);
-  }
-  header span {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  /* ── MAIN LAYOUT ── */
-  main { padding: 2.5rem 3rem; max-width: 1100px; }
-
-  /* ── UPLOAD ZONE ── */
-  #upload-section {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 4rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative;
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(200,241,53,0.04);
-  }
-  .drop-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .drop-zone .icon {
-    font-size: 3rem; margin-bottom: 1rem; display: block;
-  }
-  .drop-zone h2 {
-    font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;
-  }
-  .drop-zone p {
-    font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted);
-  }
-
-  .instructions {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem 2rem;
-  }
-  .instructions h3 {
-    font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 1rem; font-family: 'DM Mono', monospace;
-  }
-  .instructions ol {
-    list-style: none;
-    counter-reset: steps;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-  .instructions li {
-    counter-increment: steps;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--muted);
-    display: flex;
-    gap: 0.8rem;
-    align-items: baseline;
-  }
-  .instructions li::before {
-    content: counter(steps, decimal-leading-zero);
-    color: var(--accent);
-    flex-shrink: 0;
-    font-size: 0.7rem;
-  }
-  .instructions li strong { color: var(--text); }
-
-  /* ── CONFIG PANEL ── */
-  #config-section {
-    display: none;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .config-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem 2rem;
-  }
-  .config-card h3 {
-    font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 1.2rem; font-family: 'DM Mono', monospace;
-  }
-
-  .file-badge {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: rgba(200,241,53,0.1); border: 1px solid var(--accent);
-    border-radius: 6px; padding: 0.4rem 0.8rem;
-    font-family: 'DM Mono', monospace; font-size: 0.82rem;
-    color: var(--accent); margin-bottom: 1rem;
-  }
-
-  .elections-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .election-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .election-card label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--muted);
-    flex: 1;
-    min-width: 160px;
-  }
-  .election-card label strong {
-    color: var(--text);
-    display: block;
-    font-size: 0.9rem;
-    margin-bottom: 0.2rem;
-  }
-  .election-card input[type=checkbox] {
-    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
-    flex-shrink: 0;
-  }
-  .election-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.2rem 0.5rem;
-    white-space: nowrap;
-  }
-
-  .run-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    padding: 0.9rem 2rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: -0.01em;
-    transition: transform 0.15s, opacity 0.15s;
-    align-self: flex-start;
-  }
-  .run-btn:hover { transform: translateY(-1px); opacity: 0.9; }
-  .run-btn:active { transform: translateY(0); }
-
-  .back-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-    align-self: flex-start;
-  }
-  .back-btn:hover { border-color: var(--text); color: var(--text); }
-
-  /* ── RESULTS ── */
-  #results-section {
-    display: none;
-    flex-direction: column;
-    gap: 2.5rem;
-  }
-
-  .results-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .results-header h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    flex: 1;
-  }
-
-  /* ── ELECTION RESULT BLOCK ── */
-  .election-result {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .election-result-header {
-    padding: 1.2rem 1.8rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .election-result-header h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    flex: 1;
-  }
-  .winner-chip {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    background: rgba(200,241,53,0.15);
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    padding: 0.35rem 0.9rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 0.02em;
-  }
-  .winner-chip.tie {
-    background: rgba(241,193,53,0.15);
-    border-color: var(--accent2);
-    color: var(--accent2);
-  }
-
-  /* ── ROUNDS ── */
-  .rounds-container {
-    padding: 1.5rem 1.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-  }
-
-  .round-block {
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-  .round-block.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .round-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .round-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .bars {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-  }
-
-  .bar-row {
-    display: grid;
-    grid-template-columns: 160px 1fr 60px;
-    align-items: center;
-    gap: 0.8rem;
-  }
-
-  .bar-name {
-    font-size: 0.88rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .bar-name.eliminated { color: var(--muted); text-decoration: line-through; }
-  .bar-name.winner-name { color: var(--accent); }
-
-  .bar-track {
-    background: var(--surface2);
-    border-radius: 3px;
-    height: 22px;
-    overflow: hidden;
-    position: relative;
-  }
-  .bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    width: 0;
-    transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
-    position: relative;
-  }
-  .bar-fill.normal { background: #3a6ea8; }
-  .bar-fill.leading { background: #5999cc; }
-  .bar-fill.winning { background: var(--accent); }
-  .bar-fill.eliminated-bar { background: var(--danger); opacity: 0.5; }
-
-  .bar-pct {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--muted);
-    text-align: right;
-    white-space: nowrap;
-  }
-  .bar-pct.winning { color: var(--accent); font-weight: 600; }
-
-  /* Elimination flash */
-  @keyframes elimFlash {
-    0%   { background: rgba(241,53,53,0.25); }
-    60%  { background: rgba(241,53,53,0.08); }
-    100% { background: transparent; }
-  }
-  .elim-flash { animation: elimFlash 1.2s ease forwards; border-radius: 4px; }
-
-  .elimination-note {
-    margin-top: 0.5rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--danger);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .elimination-note span { color: var(--muted); }
-
-  /* ── SUMMARY TABLE ── */
-  .summary-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-  }
-  .summary-table th {
-    text-align: left;
-    padding: 0.5rem 1rem;
-    color: var(--muted);
-    font-weight: 400;
-    border-bottom: 1px solid var(--border);
-    letter-spacing: 0.06em;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-  }
-  .summary-table td {
-    padding: 0.6rem 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .summary-table tr:last-child td { border-bottom: none; }
-  .summary-table tr.winner-row td { color: var(--accent); font-weight: 600; }
-
-  /* ── SPEED CONTROL ── */
-  .speed-control {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-  .speed-control input[type=range] {
-    accent-color: var(--accent);
-    width: 80px;
-  }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 600px) {
-    header, main { padding: 1.5rem; }
-    .bar-row { grid-template-columns: 100px 1fr 48px; }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <h1>Ranked Choice Voting</h1>
-  <span>Instant Runoff · Multi-Election · Animated</span>
-</header>
-
-<main>
-
-  <!-- ══ STEP 1: UPLOAD ══ -->
-  <div id="upload-section">
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".csv">
-      <span class="icon">🗳️</span>
-      <h2>Drop your Google Sheet CSV here</h2>
-      <p>Or click to browse · Export as File → Download → CSV</p>
-    </div>
-
-    <div class="instructions">
-      <h3>How it works</h3>
-      <ol>
-        <li>In Google Sheets, go to <strong>File → Download → CSV</strong> and drop the file above.</li>
-        <li>The app auto-detects columns that look like <strong>"[Election] [Rank N]"</strong> (the default Google Forms format).</li>
-        <li>Select which elections to tabulate, then hit <strong>Run Elections</strong>.</li>
-        <li>Watch the animated <strong>Instant Runoff</strong> play out round by round — the lowest-vote candidate is eliminated each round until someone crosses 50%.</li>
-        <li>Save this HTML file to your <strong>Google Drive</strong> — it works completely offline, no server needed.</li>
-      </ol>
-    </div>
-  </div>
-
-  <!-- ══ STEP 2: CONFIGURE ══ -->
-  <div id="config-section">
-    <div class="config-card">
-      <h3>Loaded File</h3>
-      <div class="file-badge" id="fileBadge">📄 —</div>
-      <div id="electionsGrid" class="elections-grid"></div>
-    </div>
-
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
-      <button class="back-btn" onclick="resetToUpload()">← Back</button>
-      <button class="run-btn" onclick="runElections()">▶ Run Elections</button>
-    </div>
-  </div>
-
-  <!-- ══ STEP 3: RESULTS ══ -->
-  <div id="results-section">
-    <div class="results-header">
-      <h2>Results</h2>
-      <div class="speed-control">
-        Speed
-        <input type="range" id="speedSlider" min="100" max="1200" value="600" step="100">
-        <span id="speedLabel">1×</span>
-      </div>
-      <button class="back-btn" onclick="resetToConfig()">← Back</button>
-    </div>
-    <div id="resultsContainer"></div>
-  </div>
-
-</main>
-
-<script>
-// ═══════════════════════════════════════════════
-//  GLOBALS
-// ═══════════════════════════════════════════════
-let parsedData   = null;  // { headers, rows }
-let elections    = [];    // array of { name, columns: [{rank, col}], candidates }
-let animDelay    = 600;   // ms per round step
-
-// ═══════════════════════════════════════════════
-//  FILE HANDLING
-// ═══════════════════════════════════════════════
-const dropZone  = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f) handleFile(f);
-});
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
-
-function handleFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      parsedData = parseCSV(e.target.result);
-      elections  = detectElections(parsedData.headers);
-      if (!elections.length) {
-        alert('No ranked-choice columns detected.\n\nExpected column names like:\n  "Best Pizza [Rank 1]"\n  "Best Pizza [Rank 2]"\n\nMake sure your Google Form uses ranking questions.');
-        return;
-      }
-      document.getElementById('fileBadge').textContent = '📄 ' + file.name;
-      buildConfigUI();
-      show('config');
-    } catch(err) {
-      alert('Could not parse CSV: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
+  --winner: #7aa33a;
 }
 
-// ═══════════════════════════════════════════════
-//  CSV PARSER
-// ═══════════════════════════════════════════════
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 2rem;
+}
+
+h1 {
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+input {
+  margin-bottom: 1.5rem;
+}
+
+.round {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.bar {
+  height: 20px;
+  background: var(--surface2);
+  margin: 5px 0;
+  position: relative;
+}
+
+.fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.5s;
+}
+
+.eliminated {
+  color: var(--danger);
+}
+
+.winner {
+  color: var(--winner);
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Ranked Choice Voting</h1>
+<input type="file" id="fileInput" accept=".csv">
+
+<div id="output"></div>
+
+<script>
+let parsedData;
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    parsedData = parseCSV(reader.result);
+    runElection();
+  };
+
+  reader.readAsText(file);
+});
+
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
-  const headers = splitCSVLine(lines[0]);
-  const rows = lines.slice(1).map(l => splitCSVLine(l));
+  const headers = lines[0].split(",");
+  const rows = lines.slice(1).map(l => l.split(","));
   return { headers, rows };
 }
 
-function splitCSVLine(line) {
-  const result = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (c === ',' && !inQ) {
-      result.push(cur.trim()); cur = '';
-    } else cur += c;
-  }
-  result.push(cur.trim());
-  return result;
-}
+function runElection() {
+  const candidates = [...new Set(parsedData.rows.flat())].filter(Boolean);
 
-// ═══════════════════════════════════════════════
-//  ELECTION DETECTION
-//  Supports formats:
-//   "Question [Rank 1]"        Google Forms ranking grid
-//   "Question - Rank 1"
-//   "Question (1st choice)"
-//   "Question_rank_1"
-// ═══════════════════════════════════════════════
-function detectElections(headers) {
-  // Patterns that capture (election name, rank number)
-  const patterns = [
-    /^(.*?)\s*[\[({]\s*(?:rank\s*|choice\s*)(\d+)/i,
-    /^(.*?)\s*-\s*(?:rank\s*|choice\s*)(\d+)/i,
-    /^(.*?)_(?:rank_?)(\d+)/i,
-  ];
+  const ballots = parsedData.rows.map(row =>
+    row.filter(Boolean)
+  );
 
-  const map = {}; // electionName → { rankN → colIndex }
-  headers.forEach((h, i) => {
-    for (const pat of patterns) {
-      const m = h.match(pat);
-      if (m) {
-        const name = m[1].trim();
-        const rank = parseInt(m[2]);
-        if (!map[name]) map[name] = {};
-        map[name][rank] = i;
-        break;
-      }
-    }
-  });
-
-  return Object.entries(map).map(([name, rankMap]) => {
-    const sortedRanks = Object.keys(rankMap).map(Number).sort((a,b)=>a-b);
-    const columns = sortedRanks.map(r => ({ rank: r, col: rankMap[r] }));
-    // Gather all unique candidates across all voters
-    const candidateSet = new Set();
-    parsedData.rows.forEach(row => {
-      columns.forEach(({ col }) => {
-        const v = row[col]?.trim();
-        if (v) candidateSet.add(v);
-      });
-    });
-    return { name, columns, candidates: [...candidateSet].sort() };
-  }).filter(e => e.columns.length >= 2 && e.candidates.length >= 2);
-}
-
-// ═══════════════════════════════════════════════
-//  CONFIG UI
-// ═══════════════════════════════════════════════
-function buildConfigUI() {
-  const grid = document.getElementById('electionsGrid');
-  grid.innerHTML = '';
-  elections.forEach((el, i) => {
-    const div = document.createElement('div');
-    div.className = 'election-card';
-    div.innerHTML = `
-      <input type="checkbox" id="el${i}" checked>
-      <label for="el${i}">
-        <strong>${escHtml(el.name)}</strong>
-        ${el.candidates.length} candidates · ${el.columns.length} ranks
-      </label>
-      <span class="election-badge">${el.candidates.slice(0,3).map(escHtml).join(', ')}${el.candidates.length > 3 ? ` +${el.candidates.length-3}` : ''}</span>
-    `;
-    grid.appendChild(div);
-  });
-}
-
-// ═══════════════════════════════════════════════
-//  IRV ALGORITHM
-// ═══════════════════════════════════════════════
-function runIRV(election) {
-  // Build a ballot for each voter: ordered list of candidates
-  const ballots = parsedData.rows.map(row => {
-    const ranked = election.columns
-      .map(({ col }) => row[col]?.trim() || '')
-      .filter(Boolean);
-    return ranked; // already in rank order
-  }).filter(b => b.length > 0);
-
-  if (!ballots.length) return { rounds: [], winner: null, tie: false };
-
-  const totalVoters = ballots.length;
-  let remaining = [...election.candidates];
+  let remaining = [...candidates];
   const rounds = [];
 
   while (true) {
-    // Count first-choice votes among remaining candidates
     const counts = {};
     remaining.forEach(c => counts[c] = 0);
+
     ballots.forEach(ballot => {
-      const top = ballot.find(c => remaining.includes(c));
-      if (top) counts[top] = (counts[top] || 0) + 1;
+      const pick = ballot.find(c => remaining.includes(c));
+      if (pick) counts[pick]++;
     });
 
-    const sorted = remaining.slice().sort((a,b) => counts[b] - counts[a]);
-    const totalActive = Object.values(counts).reduce((s,v)=>s+v,0);
-    rounds.push({ counts: { ...counts }, total: totalActive, eliminated: null });
+    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+    rounds.push({ counts: {...counts}, total });
 
-    // Check majority
-    if (counts[sorted[0]] / totalActive > 0.5 || remaining.length <= 2) {
-      if (remaining.length <= 2) {
-        const [a,b] = remaining;
-        if (counts[a] === counts[b]) return { rounds, winner: [a,b], tie: true };
-      }
-      return { rounds, winner: sorted[0], tie: false };
+    const sorted = remaining.slice().sort((a,b)=>counts[b]-counts[a]);
+
+    if (counts[sorted[0]] / total > 0.5 || remaining.length <= 2) {
+      rounds[rounds.length-1].winner = sorted[0];
+      render(rounds);
+      return;
     }
 
-    // Eliminate lowest (handle ties for last)
+    // Deterministic tie-breaking
     const minVotes = counts[sorted[sorted.length-1]];
     const toElim = sorted.filter(c => counts[c] === minVotes);
-    const eliminated = toElim[Math.floor(Math.random() * toElim.length)]; // tiebreak: random
+
+    let eliminated;
+
+    if (toElim.length === 1) {
+      eliminated = toElim[0];
+    } else {
+      for (let i = rounds.length - 2; i >= 0; i--) {
+        const prev = rounds[i].counts;
+
+        const sortedTie = toElim.slice().sort((a,b)=>{
+          return (prev[a]||0) - (prev[b]||0);
+        });
+
+        if ((prev[sortedTie[0]]||0) !== (prev[sortedTie[1]]||0)) {
+          eliminated = sortedTie[0];
+          break;
+        }
+      }
+
+      if (!eliminated) {
+        eliminated = toElim.sort()[0];
+      }
+    }
+
     rounds[rounds.length-1].eliminated = eliminated;
     remaining = remaining.filter(c => c !== eliminated);
   }
 }
 
-// ═══════════════════════════════════════════════
-//  RUN ELECTIONS → RENDER
-// ═══════════════════════════════════════════════
-function runElections() {
-  const selected = elections.filter((_, i) => {
-    const cb = document.getElementById('el' + i);
-    return cb && cb.checked;
-  });
-  if (!selected.length) { alert('Select at least one election.'); return; }
+function render(rounds) {
+  const container = document.getElementById('output');
+  container.innerHTML = "";
 
-  const container = document.getElementById('resultsContainer');
-  container.innerHTML = '';
+  rounds.forEach((round, i) => {
+    const div = document.createElement('div');
+    div.className = 'round';
 
-  selected.forEach(el => {
-    const result = runIRV(el);
-    const block   = buildElectionResultBlock(el, result);
-    container.appendChild(block);
-  });
+    const title = document.createElement('h3');
+    title.textContent = "Round " + (i + 1);
+    div.appendChild(title);
 
-  show('results');
-  // Animate all rounds
-  animateAll();
-}
+    const total = round.total || 1;
 
-// ═══════════════════════════════════════════════
-//  BUILD DOM FOR ONE ELECTION
-// ═══════════════════════════════════════════════
-function buildElectionResultBlock(election, result) {
-  const { rounds, winner, tie } = result;
-  const winnerLabel = tie
-    ? '🤝 Tie: ' + winner.join(' & ')
-    : '🏆 ' + winner;
+    Object.entries(round.counts).forEach(([c,v]) => {
+      const pct = (v / total) * 100;
 
-  const div = document.createElement('div');
-  div.className = 'election-result';
-  div.innerHTML = `
-    <div class="election-result-header">
-      <h3>${escHtml(election.name)}</h3>
-      <div class="winner-chip ${tie ? 'tie' : ''}">${escHtml(winnerLabel)}</div>
-    </div>
-    <div class="rounds-container" id="rounds-${slugify(election.name)}"></div>
-    <div style="padding:0 1.8rem 1.5rem">
-      <div class="config-card" style="padding:0;overflow:hidden;">
-        <table class="summary-table">
-          <thead><tr>
-            <th>Candidate</th><th>Round 1</th><th>Final Round</th><th>Status</th>
-          </tr></thead>
-          <tbody id="summary-${slugify(election.name)}"></tbody>
-        </table>
-      </div>
-    </div>
-  `;
+      const label = document.createElement('div');
+      label.textContent = `${c} (${v})`;
+      div.appendChild(label);
 
-  // Fill summary table
-  const tbody = div.querySelector(`#summary-${slugify(election.name)}`);
-  const allCandidates = election.candidates.slice().sort((a,b) => {
-    const r1a = rounds[0]?.counts[a] || 0;
-    const r1b = rounds[0]?.counts[b] || 0;
-    return r1b - r1a;
-  });
-  allCandidates.forEach(c => {
-    const r1 = rounds[0]?.counts[c] ?? 0;
-    const rF = rounds[rounds.length-1]?.counts[c] ?? '—';
-    const isWin = tie ? winner.includes(c) : winner === c;
-    const isElim = rounds.some(r => r.eliminated === c);
-    const tr = document.createElement('tr');
-    if (isWin) tr.className = 'winner-row';
-    tr.innerHTML = `<td>${escHtml(c)}</td><td>${r1}</td><td>${rF}</td>
-      <td style="color:${isWin ? 'var(--accent)' : isElim ? 'var(--danger)' : 'var(--muted)'}">
-        ${isWin ? '🏆 Winner' : isElim ? '✕ Eliminated' : '—'}
-      </td>`;
-    tbody.appendChild(tr);
-  });
+      const bar = document.createElement('div');
+      bar.className = 'bar';
 
-  // Store round data for animation
-  div._electionData = { election, rounds, winner, tie };
-  return div;
-}
+      const fill = document.createElement('div');
+      fill.className = 'fill';
+      setTimeout(() => fill.style.width = pct + '%', 50);
 
-// ═══════════════════════════════════════════════
-//  ANIMATE ALL ROUNDS (sequential across elections)
-// ═══════════════════════════════════════════════
-function animateAll() {
-  const blocks = document.querySelectorAll('.election-result');
-  let globalDelay = 100;
-
-  blocks.forEach(block => {
-    const { election, rounds, winner, tie } = block._electionData;
-    const container = block.querySelector(`#rounds-${slugify(election.name)}`);
-
-    rounds.forEach((round, ri) => {
-      const allCandidates = election.candidates.slice().sort(
-        (a,b) => (rounds[0].counts[b]||0) - (rounds[0].counts[a]||0)
-      );
-      const total = round.total || 1;
-      const eliminated = round.eliminated;
-      const isLast = ri === rounds.length - 1;
-
-      const roundDiv = document.createElement('div');
-      roundDiv.className = 'round-block';
-      roundDiv.innerHTML = `
-        <div class="round-label">Round ${ri + 1}${isLast ? ' — Final' : ''}</div>
-        <div class="bars" id="bars-${slugify(election.name)}-${ri}"></div>
-        ${eliminated ? `
-          <div class="elimination-note" id="elim-${slugify(election.name)}-${ri}" style="opacity:0">
-            ✕ <strong>${escHtml(eliminated)}</strong>
-            <span>eliminated (${round.counts[eliminated]} votes)</span>
-          </div>` : ''}
-      `;
-      container.appendChild(roundDiv);
-
-      const barsDiv = roundDiv.querySelector(`#bars-${slugify(election.name)}-${ri}`);
-      const sorted = allCandidates.slice().sort((a,b) => (round.counts[b]||0) - (round.counts[a]||0));
-
-      sorted.forEach(candidate => {
-        const votes = round.counts[candidate] || 0;
-        const pct   = total ? (votes / total * 100) : 0;
-        const isElim = candidate === eliminated;
-        const isWinner = !tie && candidate === winner && isLast;
-        const isLeading = !isElim && candidate === sorted[0];
-        const pastElim = !round.counts.hasOwnProperty(candidate) || votes === 0;
-
-        const fillClass = isElim ? 'eliminated-bar'
-                        : isWinner ? 'winning'
-                        : isLeading ? 'leading'
-                        : 'normal';
-        const nameClass = pastElim && !isElim ? 'eliminated'
-                        : isWinner ? 'winner-name' : '';
-
-        const row = document.createElement('div');
-        row.className = 'bar-row';
-        row.innerHTML = `
-          <div class="bar-name ${nameClass}">${escHtml(candidate)}</div>
-          <div class="bar-track">
-            <div class="bar-fill ${fillClass}" data-pct="${pct}" style="width:0"></div>
-          </div>
-          <div class="bar-pct ${isWinner ? 'winning' : ''}">${pct.toFixed(1)}%</div>
-        `;
-        barsDiv.appendChild(row);
-      });
-
-      // Schedule animation
-      setTimeout(() => {
-        roundDiv.classList.add('visible');
-
-        // Animate bars
-        barsDiv.querySelectorAll('.bar-fill').forEach(fill => {
-          const targetPct = parseFloat(fill.dataset.pct);
-          setTimeout(() => {
-            fill.style.width = targetPct + '%';
-          }, 80);
-        });
-
-        // Show elimination note
-        if (eliminated) {
-          const elimNote = roundDiv.querySelector(`#elim-${slugify(election.name)}-${ri}`);
-          if (elimNote) {
-            setTimeout(() => {
-              elimNote.style.transition = 'opacity 0.4s';
-              elimNote.style.opacity = '1';
-              // Flash bar row
-              const rows = barsDiv.querySelectorAll('.bar-row');
-              rows.forEach(r => {
-                if (r.querySelector('.bar-name')?.textContent.trim() === eliminated) {
-                  r.classList.add('elim-flash');
-                }
-              });
-            }, animDelay * 0.8);
-          }
-        }
-      }, globalDelay);
-
-      globalDelay += animDelay;
+      bar.appendChild(fill);
+      div.appendChild(bar);
     });
+
+    if (round.eliminated) {
+      const elim = document.createElement('div');
+      elim.className = 'eliminated';
+      elim.textContent = "Eliminated: " + round.eliminated;
+      div.appendChild(elim);
+    }
+
+    if (round.winner) {
+      const win = document.createElement('div');
+      win.className = 'winner';
+      win.textContent = "Winner: " + round.winner;
+      div.appendChild(win);
+    }
+
+    container.appendChild(div);
   });
 }
-
-// ═══════════════════════════════════════════════
-//  SPEED SLIDER
-// ═══════════════════════════════════════════════
-document.getElementById('speedSlider').addEventListener('input', function() {
-  const v = parseInt(this.value);
-  // Map 100–1200 inversely to delay: fast=100ms, slow=1200ms
-  animDelay = v;
-  const norm = (1200 - v) / (1200 - 100); // 0=fast, 1=slow
-  // Display as 0.25× – 4×
-  const label = v <= 200 ? '4×' : v <= 400 ? '2×' : v <= 700 ? '1×' : v <= 1000 ? '0.5×' : '0.25×';
-  document.getElementById('speedLabel').textContent = label;
-});
-
-// ═══════════════════════════════════════════════
-//  NAV
-// ═══════════════════════════════════════════════
-function show(section) {
-  ['upload-section','config-section','results-section'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
-  const map = { upload: 'upload-section', config: 'config-section', results: 'results-section' };
-  document.getElementById(map[section]).style.display = 'flex';
-}
-
-function resetToUpload() {
-  fileInput.value = '';
-  parsedData = null; elections = [];
-  show('upload');
-}
-
-function resetToConfig() {
-  show('config');
-}
-
-// ═══════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function slugify(s) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-}
-
-// Init
-show('upload');
 </script>
+
 </body>
 </html>
