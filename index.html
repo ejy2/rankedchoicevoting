@@ -65,11 +65,15 @@ h1 {
 .upload-area {
   background: var(--surface);
   border: 2px dashed var(--border);
-  padding: 3rem 1rem;
+  padding: 2rem;
   text-align: center;
   border-radius: 12px;
   margin-bottom: 3rem;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
 }
 
 .upload-area:hover {
@@ -77,9 +81,29 @@ h1 {
   background: #2a2822;
 }
 
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: var(--surface2);
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+input[type="number"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--accent2);
+  padding: 5px;
+  border-radius: 4px;
+  width: 60px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
 input[type="file"] {
-  display: block;
-  margin: 1rem auto;
   color: var(--muted);
   cursor: pointer;
 }
@@ -196,12 +220,18 @@ input[type="file"] {
 <div class="container">
   <header>
     <h1>WOC Ranked Choice Voting</h1>
-    <div class="sub-header">All hail election god Ethan Young!</div>
+    <div class="sub-header">Stability through consensus. Only [Rank n] columns are tabulated.</div>
   </header>
   
   <div class="upload-area">
-    <label for="fileInput">Choose your CSV file to begin the count</label>
-    <input type="file" id="fileInput" accept=".csv">
+    <div class="settings-row">
+      <label for="winnerCount">Number of winners to elect:</label>
+      <input type="number" id="winnerCount" value="1" min="1">
+    </div>
+    <div>
+      <label for="fileInput" style="display:block; margin-bottom:10px;">Upload CSV file:</label>
+      <input type="file" id="fileInput" accept=".csv">
+    </div>
   </div>
 
   <div id="output"></div>
@@ -222,12 +252,20 @@ document.getElementById('fileInput').addEventListener('change', e => {
   reader.readAsText(file);
 });
 
+// Also re-run if the winner count changes after a file is already loaded
+document.getElementById('winnerCount').addEventListener('change', () => {
+  if (csvData) processRankedElections();
+});
+
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length === 0) return null;
   
   const headers = lines[0].split(",").map(h => h.trim());
-  const rows = lines.slice(1).map(l => l.split(",").map(cell => cell.trim()));
+  const rows = lines.slice(1).map(l => {
+    // Basic handle for commas inside quotes if present
+    return l.split(",").map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+  });
   return { headers, rows };
 }
 
@@ -235,8 +273,9 @@ function processRankedElections() {
   const container = document.getElementById('output');
   container.innerHTML = ""; 
 
+  const targetWinners = parseInt(document.getElementById('winnerCount').value) || 1;
+
   // STRICT FILTER: Match only columns ending in [Rank ...]
-  // This captures the text before the rank as the "Election Name"
   const rankRegex = /^(.*?)\s*\[Rank\s*[^\]]+\]$/i;
   
   const groups = {};
@@ -257,18 +296,16 @@ function processRankedElections() {
     return;
   }
 
-  // Process each distinct group (category)
   Object.keys(groups).forEach(name => {
     const colIndices = groups[name];
     
-    // Build ballots for this specific category
+    // Build ballots for this group
     const ballots = csvData.rows.map(row => {
         return colIndices.map(idx => row[idx]).filter(val => val && val.length > 0);
     }).filter(b => b.length > 0);
 
     if (ballots.length === 0) return;
 
-    // UI Construction
     const card = document.createElement('div');
     card.className = 'election-card';
     const title = document.createElement('h2');
@@ -277,45 +314,73 @@ function processRankedElections() {
     card.appendChild(title);
     container.appendChild(card);
 
-    runRCV(ballots, card);
+    runRCV(ballots, card, targetWinners);
   });
 }
 
-function runRCV(ballots, parent) {
+function runRCV(ballots, parent, targetWinners) {
   const allCandidates = [...new Set(ballots.flat())];
   let remaining = [...allCandidates];
   const rounds = [];
 
-  while (remaining.length > 0) {
-    const counts = {};
-    remaining.forEach(c => counts[c] = 0);
+  // If we start with fewer candidates than winners requested, they are all winners immediately
+  if (remaining.length <= targetWinners) {
+      rounds.push({ 
+          counts: getCounts(ballots, remaining), 
+          total: ballots.length, 
+          winners: [...remaining] 
+      });
+      render(rounds, parent);
+      return;
+  }
 
-    ballots.forEach(ballot => {
-      const topValid = ballot.find(c => remaining.includes(c));
-      if (topValid) counts[topValid]++;
-    });
-
+  while (remaining.length > targetWinners) {
+    const counts = getCounts(ballots, remaining);
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
     const sorted = [...remaining].sort((a, b) => counts[b] - counts[a]);
     
     const data = { counts: { ...counts }, total: total };
     rounds.push(data);
 
-    // Majority check
-    if (total === 0 || (counts[sorted[0]] / total) > 0.5 || remaining.length <= 1) {
-      data.winner = sorted[0];
+    // If it's a 1-winner election, check for 50% majority early exit
+    if (targetWinners === 1 && total > 0 && (counts[sorted[0]] / total) > 0.5) {
+      data.winners = [sorted[0]];
       render(rounds, parent);
       return;
     }
 
-    // Eliminate lowest
+    // Eliminate the lowest candidate
     const minVal = counts[sorted[sorted.length - 1]];
     const bottomCandidates = sorted.filter(c => counts[c] === minVal);
-    const eliminated = bottomCandidates.sort()[0]; // Alpha tie-break
+    const eliminated = bottomCandidates.sort()[0]; // Alphabetical tie-break
     
     data.eliminated = eliminated;
     remaining = remaining.filter(c => c !== eliminated);
+
+    // If we've reached the target number of winners, stop
+    if (remaining.length === targetWinners) {
+        // Run one final count for the last round display
+        const finalCounts = getCounts(ballots, remaining);
+        rounds.push({ 
+            counts: { ...finalCounts }, 
+            total: Object.values(finalCounts).reduce((a, b) => a + b, 0),
+            winners: [...remaining] 
+        });
+        break;
+    }
   }
+
+  render(rounds, parent);
+}
+
+function getCounts(ballots, remaining) {
+    const counts = {};
+    remaining.forEach(c => counts[c] = 0);
+    ballots.forEach(ballot => {
+      const topValid = ballot.find(c => remaining.includes(c));
+      if (topValid) counts[topValid]++;
+    });
+    return counts;
 }
 
 function render(rounds, parent) {
@@ -358,17 +423,18 @@ function render(rounds, parent) {
       container.appendChild(entry);
     });
 
-    if (round.eliminated && !round.winner) {
+    if (round.eliminated && !round.winners) {
       const elim = document.createElement('div');
       elim.className = 'elim-text';
       elim.textContent = `Eliminated: ${round.eliminated} (lowest votes)`;
       container.appendChild(elim);
     }
 
-    if (round.winner) {
+    if (round.winners) {
       const win = document.createElement('div');
       win.className = 'winner-banner';
-      win.textContent = `✓ ELECTED: ${round.winner}`;
+      const winnerLabel = round.winners.length > 1 ? "ELECTED BOARD" : "ELECTED";
+      win.textContent = `✓ ${winnerLabel}: ${round.winners.join(", ")}`;
       container.appendChild(win);
     }
 
